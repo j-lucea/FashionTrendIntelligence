@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: HTTP API for SegFormer B3 clothes segmentation
+
+Parameters:
+  HuggingFaceSecret:
+    Type: String
+    Description: Name of an AWS Secrets Manager secret with an HF_TOKEN JSON field
+
+Resources:
+  Segmentation:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: serverless/
+      Handler: handler.handler
+      Runtime: python3.13
+      MemorySize: 256
+      Timeout: 60
+      Environment:
+        Variables:
+          HF_TOKEN: !Sub '{{resolve:secretsmanager:${HuggingFaceSecret}:SecretString:HF_TOKEN}}'
+      FunctionUrlConfig:
+        AuthType: AWS_IAM
+
+Outputs:
+  ApiUrl:
+    Description: Base URL of the IAM-authenticated segmentation API
+    Value: !GetAtt SegmentationUrl.FunctionUrl
